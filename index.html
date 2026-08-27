@@ -3,35 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>公車歷史與即時紀錄分析</title>
-
-<!-- iPhone「加入主畫面」相關設定 -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="公車歷史">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0f172a">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='64' font-size='52' text-anchor='middle'%3E%F0%9F%9A%8C%3C/text%3E%3C/svg%3E">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/3.4.13/tailwind.min.js"></script>
+<title>公車與客運歷史紀錄分析</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    -webkit-tap-highlight-color: transparent;
-  }
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { display:none; }
   .spin { animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-<!-- 頂部導覽 -->
 <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur border-b border-slate-800">
   <div class="px-4 pt-3 pb-2">
-    <h1 class="text-lg font-bold tracking-wide">🚌 台灣公車動態與歷史紀錄</h1>
+    <h1 class="text-lg font-bold tracking-wide">🚌 台灣市區公車與公路客運紀錄</h1>
     <p class="text-[11px] text-slate-500 mt-0.5">個人自用 · 資料來源：交通部 TDX API</p>
   </div>
   <nav class="grid grid-cols-3 text-center text-sm select-none">
@@ -43,109 +28,66 @@
 
 <main class="px-4 pb-24 pt-4 max-w-2xl mx-auto">
 
-  <!-- 分頁：設定 -->
   <section id="panel-settings" class="tab-panel space-y-4">
     <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800">
       <h2 class="font-semibold mb-1">TDX API 憑證設定</h2>
-      <p class="text-xs text-slate-400 leading-relaxed mb-3">
-        憑證僅會儲存在「你目前這台裝置瀏覽器」的 localStorage 中。
-      </p>
-
+      <p class="text-xs text-slate-400 leading-relaxed mb-3">憑證僅會儲存在本地裝置中。</p>
       <label class="block text-xs text-slate-400 mb-1">Client ID</label>
-      <input id="input-client-id" type="text" autocomplete="off" spellcheck="false"
-        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm mb-3 outline-none focus:border-emerald-400"
-        placeholder="Client ID">
-
+      <input id="input-client-id" type="text" autocomplete="off" spellcheck="false" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm mb-3 outline-none focus:border-emerald-400" placeholder="Client ID">
       <label class="block text-xs text-slate-400 mb-1">Client Secret</label>
-      <div class="relative mb-3">
-        <input id="input-client-secret" type="password" autocomplete="off" spellcheck="false"
-          class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 pr-16 text-sm outline-none focus:border-emerald-400"
-          placeholder="Client Secret">
-        <button id="btn-toggle-secret" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 px-2 py-1">顯示</button>
-      </div>
-
+      <input id="input-client-secret" type="password" autocomplete="off" spellcheck="false" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm mb-3 outline-none focus:border-emerald-400" placeholder="Client Secret">
       <div class="flex gap-2">
-        <button id="btn-save-cred" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-2.5 text-sm active:scale-95 transition">
-          儲存憑證
-        </button>
-        <button id="btn-test-cred" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg py-2.5 text-sm active:scale-95 transition">
-          測試連線
-        </button>
+        <button id="btn-save-cred" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-2.5 text-sm">儲存憑證</button>
+        <button id="btn-test-cred" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg py-2.5 text-sm">測試連線</button>
       </div>
-
-      <div id="cred-status" class="mt-3 text-xs rounded-lg px-3 py-2 hidden"></div>
     </div>
   </section>
 
-  <!-- 分頁：車牌軌跡查詢 -->
   <section id="panel-plate" class="tab-panel space-y-4 hidden">
     <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 space-y-3">
-      <h2 class="font-semibold">車牌軌跡查詢（含今日與歷史）</h2>
-
+      <h2 class="font-semibold">車牌軌跡查詢</h2>
       <div>
         <label class="block text-xs text-slate-400 mb-1">車牌號碼</label>
-        <input id="plate-input" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false"
-          class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 tracking-widest"
-          placeholder="例如：KFA-1234">
+        <input id="plate-input" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400" placeholder="例如：EAL-3716">
       </div>
-
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs text-slate-400 mb-1">縣市</label>
+          <label class="block text-xs text-slate-400 mb-1">類別／縣市</label>
           <select id="plate-city" class="city-select w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"></select>
         </div>
         <div>
-          <label class="block text-xs text-slate-400 mb-1">日期（支援今天）</label>
+          <label class="block text-xs text-slate-400 mb-1">日期</label>
           <input id="plate-date" type="date" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400">
         </div>
       </div>
-
-      <button id="plate-search-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-3 text-sm active:scale-95 transition">
-        查詢軌跡
-      </button>
+      <button id="plate-search-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-3 text-sm">查詢軌跡</button>
     </div>
-
     <div id="plate-result"></div>
   </section>
 
-  <!-- 分頁：路線班次分析 -->
   <section id="panel-route" class="tab-panel space-y-4 hidden">
     <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 space-y-3">
       <h2 class="font-semibold">路線班次與過站分析</h2>
-
       <div>
-        <label class="block text-xs text-slate-400 mb-1">縣市</label>
+        <label class="block text-xs text-slate-400 mb-1">類別／縣市</label>
         <select id="route-city" class="city-select w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"></select>
       </div>
-
       <div>
-        <label class="block text-xs text-slate-400 mb-1">路線名稱</label>
-        <input id="route-name-input" type="text" autocomplete="off" spellcheck="false"
-          class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
-          placeholder="例如：307">
+        <label class="block text-xs text-slate-400 mb-1">路線名稱／四碼代號</label>
+        <input id="route-name-input" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400" placeholder="市區例如：307 / 客運例如：1815 或 6899">
       </div>
-
       <div>
-        <label class="block text-xs text-slate-400 mb-1">日期（支援今天）</label>
+        <label class="block text-xs text-slate-400 mb-1">日期</label>
         <input id="route-date" type="date" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400">
       </div>
-
-      <button id="route-search-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-3 text-sm active:scale-95 transition">
-        查詢班次
-      </button>
+      <button id="route-search-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg py-3 text-sm">查詢班次</button>
     </div>
-
     <div id="route-result"></div>
   </section>
 
 </main>
 
-<!-- Loading Overlay -->
 <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center flex-col gap-3">
-  <svg class="spin w-9 h-9 text-emerald-400" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25"/>
-    <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-  </svg>
   <p id="loading-text" class="text-sm text-slate-300">資料載入中...</p>
 </div>
 
@@ -155,13 +97,14 @@ const CONFIG = {
   API_BASE: 'https://tdx.transportdata.tw/api/basic',
 };
 
+/* 加入「公路客運 (InterCity)」選項 */
 const CITY_LIST = [
-  ['Taipei','臺北市'], ['NewTaipei','新北市'], ['Keelung','基隆市'], ['Taoyuan','桃園市'], 
-  ['Taichung','臺中市'], ['Tainan','臺南市'], ['Kaohsiung','高雄市'], ['Hsinchu','新竹市'], 
-  ['HsinchuCounty','新竹縣'], ['MiaoliCounty','苗栗縣'], ['ChanghuaCounty','彰化縣'], 
-  ['NantouCounty','南投縣'], ['YunlinCounty','雲林縣'], ['ChiayiCounty','嘉義縣'], 
-  ['Chiayi','嘉義市'], ['PingtungCounty','屏東縣'], ['YilanCounty','宜蘭縣'], 
-  ['HualienCounty','花蓮縣'], ['TaitungCounty','臺東縣'], ['KinmenCounty','金門縣']
+  ['InterCity', '🚌 公路客運 (跨縣市)'],
+  ['Taichung','臺中市'], ['Taipei','臺北市'], ['NewTaipei','新北市'], ['Keelung','基隆市'], ['Taoyuan','桃園市'], 
+  ['Tainan','臺南市'], ['Kaohsiung','高雄市'], ['Hsinchu','新竹市'], ['HsinchuCounty','新竹縣'], ['MiaoliCounty','苗栗縣'], 
+  ['ChanghuaCounty','彰化縣'], ['NantouCounty','南投縣'], ['YunlinCounty','雲林縣'], ['ChiayiCounty','嘉義縣'], 
+  ['Chiayi','嘉義市'], ['PingtungCounty','屏東縣'], ['YilanCounty','宜蘭縣'], ['HualienCounty','花蓮縣'], 
+  ['TaitungCounty','臺東縣'], ['KinmenCounty','金門縣']
 ];
 
 const LS = { ID: 'tdx_client_id', SECRET: 'tdx_client_secret', TOKEN: 'tdx_access_token', EXPIRY: 'tdx_token_expiry' };
@@ -175,7 +118,7 @@ function hideLoading(){ $('#loading-overlay').classList.replace('flex', 'hidden'
 function populateCitySelects(){
   $all('.city-select').forEach(sel => {
     sel.innerHTML = CITY_LIST.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
-    sel.value = 'Taipei';
+    sel.value = 'InterCity'; // 預設可切換
   });
 }
 
@@ -186,25 +129,21 @@ function todayStr(offsetDays = 0){
 }
 
 function setupDateInputs(){
-  const min = todayStr(-8);
-  const max = todayStr(0); // 允許選今天！
+  const max = todayStr(0);
   ['#plate-date', '#route-date'].forEach(sel => {
     const el = $(sel);
-    el.min = min;
     el.max = max;
     el.value = max;
   });
 }
 
-function nameOf(v){ return !v ? '' : (typeof v === 'string' ? v : (v.Zh_tw || v.En || '')); }
-function normalizePlate(s){ return (s || '').toUpperCase().replace(/[\s\-]/g, ''); }
+function normalizePlate(s){ return (s || '').toUpperCase().trim(); }
 function toHMS(iso){
   if (!iso) return '--:--:--';
   const d = new Date(iso);
   return isNaN(d) ? iso : d.toLocaleTimeString('zh-TW', { hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 
-/* API Token 管理 */
 async function getAccessToken(forceRefresh = false){
   const id = localStorage.getItem(LS.ID), secret = localStorage.getItem(LS.SECRET);
   if (!id || !secret) throw new Error('請先至「設定」輸入 Client ID 與 Client Secret。');
@@ -215,7 +154,7 @@ async function getAccessToken(forceRefresh = false){
 
   const body = new URLSearchParams({ grant_type: 'client_credentials', client_id: id, client_secret: secret });
   const res = await fetch(CONFIG.AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
-  if (!res.ok) throw new Error('驗證失敗，請檢查 Client ID 與 Secret 是否正確。');
+  if (!res.ok) throw new Error('驗證失敗，請檢查 Client ID 與 Secret。');
   
   const data = await res.json();
   localStorage.setItem(LS.TOKEN, data.access_token);
@@ -223,10 +162,14 @@ async function getAccessToken(forceRefresh = false){
   return data.access_token;
 }
 
-/* 發送 TDX API 請求 */
-async function fetchTDX(path, filterParams = '') {
+/* 自動判定是 City 還是 InterCity */
+async function fetchTDXEventData(target, filterParams = '') {
   const token = await getAccessToken();
-  let url = `${CONFIG.API_BASE}${path}?$format=JSON&$top=3000`;
+  const endpoint = target === 'InterCity' 
+    ? `/v2/Bus/RealTimeByFrequency/Event/InterCity`
+    : `/v2/Bus/RealTimeByFrequency/Event/City/${target}`;
+
+  let url = `${CONFIG.API_BASE}${endpoint}?$format=JSON&$top=1000`;
   if (filterParams) url += `&$filter=${encodeURIComponent(filterParams)}`;
 
   const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -234,7 +177,6 @@ async function fetchTDX(path, filterParams = '') {
   return await res.json();
 }
 
-/* UI 初始化 & 事件綁定 */
 function initTabs(){
   $all('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -250,11 +192,6 @@ function initSettings(){
   $('#input-client-id').value = localStorage.getItem(LS.ID) || '';
   $('#input-client-secret').value = localStorage.getItem(LS.SECRET) || '';
 
-  $('#btn-toggle-secret').onclick = () => {
-    const input = $('#input-client-secret');
-    input.type = input.type === 'password' ? 'text' : 'password';
-  };
-
   $('#btn-save-cred').onclick = () => {
     localStorage.setItem(LS.ID, $('#input-client-id').value.trim());
     localStorage.setItem(LS.SECRET, $('#input-client-secret').value.trim());
@@ -265,26 +202,23 @@ function initSettings(){
     showLoading('測試連線中...');
     try {
       await getAccessToken(true);
-      alert('✅ 連線成功！API 金鑰設定正確。');
+      alert('✅ 連線成功！');
     } catch(err) {
-      alert('❌ 連線失敗：' + err.message + '\n提示：請確認網頁是否已透過 GitHub Pages 開啟。');
+      alert('❌ 連線失敗：' + err.message);
     } finally { hideLoading(); }
   };
 }
 
-/* 車牌查詢 */
 function initPlateTab(){
   $('#plate-search-btn').onclick = async () => {
     const plate = normalizePlate($('#plate-input').value);
-    const city = $('#plate-city').value;
-    const date = $('#plate-date').value;
+    const target = $('#plate-city').value;
 
     if (!plate) return alert('請輸入車牌');
 
     showLoading('查詢過站紀錄中...');
     try {
-      // 呼叫事件 API (支援今天與歷史紀錄)
-      const data = await fetchTDX(`/v2/Bus/Event/City/${city}`, `PlateNumb eq '${plate}'`);
+      const data = await fetchTDXEventData(target, `PlateNumb eq '${plate}'`);
       renderPlateResult(data, plate);
     } catch(err) {
       $('#plate-result').innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl">${err.message}</div>`;
@@ -295,11 +229,10 @@ function initPlateTab(){
 function renderPlateResult(data, plate) {
   const container = $('#plate-result');
   if (!data || !data.length) {
-    container.innerHTML = `<div class="p-4 text-center text-slate-400 bg-slate-900 rounded-xl">查無車牌 ${plate} 當前或近日的過站動態。</div>`;
+    container.innerHTML = `<div class="p-4 text-center text-slate-400 bg-slate-900 rounded-xl">查無車牌 ${plate} 當前過站動態。</div>`;
     return;
   }
 
-  // 排序
   data.sort((a,b) => new Date(b.GPSTime || b.SrcUpdateTime) - new Date(a.GPSTime || a.SrcUpdateTime));
 
   container.innerHTML = `
@@ -308,8 +241,8 @@ function renderPlateResult(data, plate) {
       ${data.map(r => `
         <div class="p-3 flex justify-between items-center text-xs">
           <div>
-            <div class="font-semibold text-slate-200">${nameOf(r.RouteName)}</div>
-            <div class="text-slate-400 mt-0.5">${nameOf(r.StopName)}</div>
+            <div class="font-semibold text-slate-200">${r.RouteName?.Zh_tw || r.RouteName || ''}</div>
+            <div class="text-slate-400 mt-0.5">${r.StopName?.Zh_tw || r.StopName || ''}</div>
           </div>
           <div class="text-right">
             <span class="px-1.5 py-0.5 rounded ${r.A2EventType === 1 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'}">
@@ -323,17 +256,16 @@ function renderPlateResult(data, plate) {
   `;
 }
 
-/* 路線查詢 */
 function initRouteTab(){
   $('#route-search-btn').onclick = async () => {
-    const city = $('#route-city').value;
+    const target = $('#route-city').value;
     const route = $('#route-name-input').value.trim();
 
-    if (!route) return alert('請輸入路線');
+    if (!route) return alert('請輸入路線名稱或四碼代號');
 
     showLoading('查詢路線動態中...');
     try {
-      const data = await fetchTDX(`/v2/Bus/Event/City/${city}`, `RouteName/Zh_tw eq '${route}'`);
+      const data = await fetchTDXEventData(target, `RouteName/Zh_tw eq '${route}'`);
       renderRouteResult(data, route);
     } catch(err) {
       $('#route-result').innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl">${err.message}</div>`;
@@ -344,11 +276,10 @@ function initRouteTab(){
 function renderRouteResult(data, route) {
   const container = $('#route-result');
   if (!data || !data.length) {
-    container.innerHTML = `<div class="p-4 text-center text-slate-400 bg-slate-900 rounded-xl">查無路線 ${route} 的動態紀錄。</div>`;
+    container.innerHTML = `<div class="p-4 text-center text-slate-400 bg-slate-900 rounded-xl">查無路線 ${route} 當前過站紀錄。</div>`;
     return;
   }
 
-  // 按車牌分組
   const groups = {};
   data.forEach(r => {
     const p = r.PlateNumb || '未知車牌';
@@ -368,7 +299,7 @@ function renderRouteResult(data, route) {
           <div class="border-t border-slate-800 p-2 space-y-1 text-xs">
             ${list.map(r => `
               <div class="flex justify-between py-1 px-2 hover:bg-slate-800 rounded">
-                <span>${nameOf(r.StopName)}</span>
+                <span>${r.StopName?.Zh_tw || r.StopName || ''}</span>
                 <span class="font-mono text-slate-400">${toHMS(r.GPSTime || r.SrcUpdateTime)} (${r.A2EventType === 1 ? '進站' : '離站'})</span>
               </div>
             `).join('')}
@@ -379,7 +310,6 @@ function renderRouteResult(data, route) {
   `;
 }
 
-/* 啟動程式 */
 populateCitySelects();
 setupDateInputs();
 initTabs();
